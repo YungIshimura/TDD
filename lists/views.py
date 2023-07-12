@@ -3,4 +3,4 @@ from django.http import HttpResponse
 
 
 def view_index(request):
-    return HttpResponse('<html><title>To-Do lists</title></html>')
+    return render(request, 'lists/index.html')
