@@ -13,6 +13,12 @@ class NewVisitorTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.browser.quit()
 
+    def check_for_row_in_list_table(self, row_text):
+        '''Подтверждение строки в таблице списка'''
+        table = self.browser.find_element('id', 'id_list_table')
+        rows = table.find_element('tag name', 'tr')
+        self.assertIn(row_text, [row.text for row in rows])
+
     def test_can_start_a_list_and_retrieve_it_layer(self):
         '''Можно ли начать список и получить его позже'''
         # Некий гражданин слышал про новое крутое приложение со списком дел. Он хочет оценить его домашнюю страницу.
@@ -35,19 +41,21 @@ class NewVisitorTest(unittest.TestCase):
         # Когда она нажимает enter страница обновляется и теперь страницу содержит 1: "Купить молоко"
         inputbox.send_keys(Keys.ENTER)
         time.sleep(1)
+        self.check_for_row_in_list_table('1: Купить молоко')
 
         table = self.browser.find_element('id', 'id_list_table')
         rows = table.find_elements('tag name', 'tr')
-        self.assertTrue(
-            any(row.text == '1: Купить молоко' for row in rows),
-            "Новый элемент списка не появился в таблице"
-        )
+        self.assertIn('1: Купить молоко', [row.text for row in rows])
         # Текстовое поле по прежнему предлагает ей добавить ещё один элемент списка. Она вводит "Купить кефир"
-        self.fail('Закончить тест')
+        
+        inputbox = self.browser.find_element('id', 'new_item')
+        inputbox.send_keys('Купить кефир')
+        inputbox.send_keys(Keys.ENTER)
         # Страница снова обновляется и показывает оба элемента её списка
-
+        self.check_for_row_in_list_table('1: Купить молоко')
+        self.check_for_row_in_list_table('2: Купить кефир')
         # Гражданину интересно, запомнит ли сайт её список. Далее он видит, что сайт сгенерировал для неё уникальный урл - об этом есть текст
-
+        self.fail('Закончить тест')
         # Она переходит на урл, список ещё там
 
         # Удовлетворённый гражданин ложится спать 
