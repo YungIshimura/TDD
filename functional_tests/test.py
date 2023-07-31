@@ -1,10 +1,10 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
-import unittest
+from django.test import LiveServerTestCase
 
 
-class NewVisitorTest(unittest.TestCase):
+class NewVisitorTest(LiveServerTestCase):
     '''Tect нового посетителя'''
     
     def setUp(self) -> None:
@@ -16,13 +16,13 @@ class NewVisitorTest(unittest.TestCase):
     def check_for_row_in_list_table(self, row_text):
         '''Подтверждение строки в таблице списка'''
         table = self.browser.find_element('id', 'id_list_table')
-        rows = table.find_element('tag name', 'tr')
+        rows = table.find_elements('tag name', 'tr')
         self.assertIn(row_text, [row.text for row in rows])
 
     def test_can_start_a_list_and_retrieve_it_layer(self):
         '''Можно ли начать список и получить его позже'''
         # Некий гражданин слышал про новое крутое приложение со списком дел. Он хочет оценить его домашнюю страницу.
-        self.browser.get('http://localhost:8000')
+        self.browser.get(self.live_server_url)
 
         # Он видит, что заголовок и шапка страницы говорят о списках дел
         self.assertIn('To-Do', self.browser.title)
@@ -48,9 +48,12 @@ class NewVisitorTest(unittest.TestCase):
         self.assertIn('1: Купить молоко', [row.text for row in rows])
         # Текстовое поле по прежнему предлагает ей добавить ещё один элемент списка. Она вводит "Купить кефир"
         
-        inputbox = self.browser.find_element('id', 'new_item')
+        inputbox = self.browser.find_element('id', 'id_new_item')
         inputbox.send_keys('Купить кефир')
         inputbox.send_keys(Keys.ENTER)
+        time.sleep(1)
+
+    
         # Страница снова обновляется и показывает оба элемента её списка
         self.check_for_row_in_list_table('1: Купить молоко')
         self.check_for_row_in_list_table('2: Купить кефир')
@@ -59,7 +62,3 @@ class NewVisitorTest(unittest.TestCase):
         # Она переходит на урл, список ещё там
 
         # Удовлетворённый гражданин ложится спать 
-
-
-if __name__ == '__main__':
-    unittest.main(warnings='ignore')
