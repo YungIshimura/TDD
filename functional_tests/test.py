@@ -1,8 +1,10 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import WebDriverException
 import time
 from django.test import LiveServerTestCase
 
+MAX_WAIT = 10
 
 class NewVisitorTest(LiveServerTestCase):
     '''Tect нового посетителя'''
@@ -13,11 +15,20 @@ class NewVisitorTest(LiveServerTestCase):
     def tearDown(self) -> None:
         self.browser.quit()
 
-    def check_for_row_in_list_table(self, row_text):
-        '''Подтверждение строки в таблице списка'''
-        table = self.browser.find_element('id', 'id_list_table')
-        rows = table.find_elements('tag name', 'tr')
-        self.assertIn(row_text, [row.text for row in rows])
+    def wait_for_row_in_list_table(self, row_text):
+        '''Ожидание строки в таблице списка'''
+        start_time = time.time()
+        while True:
+            try:
+                table = self.browser.find_element('id', 'id_list_table')
+                rows = table.find_elements('tag name', 'tr')
+                self.assertIn(row_text, [row.text for row in rows])
+                break
+
+            except (AssertionError, WebDriverException) as e:
+                if time.time() - start_time > MAX_WAIT:
+                    raise e
+                time.sleep(0.5)
 
     def test_can_start_a_list_and_retrieve_it_layer(self):
         '''Можно ли начать список и получить его позже'''
@@ -41,7 +52,7 @@ class NewVisitorTest(LiveServerTestCase):
         # Когда она нажимает enter страница обновляется и теперь страницу содержит 1: "Купить молоко"
         inputbox.send_keys(Keys.ENTER)
         time.sleep(1)
-        self.check_for_row_in_list_table('1: Купить молоко')
+        self.wait_for_row_in_list_table('1: Купить молоко')
 
         table = self.browser.find_element('id', 'id_list_table')
         rows = table.find_elements('tag name', 'tr')
@@ -53,11 +64,46 @@ class NewVisitorTest(LiveServerTestCase):
         inputbox.send_keys(Keys.ENTER)
         time.sleep(1)
 
-    
         # Страница снова обновляется и показывает оба элемента её списка
-        self.check_for_row_in_list_table('1: Купить молоко')
-        self.check_for_row_in_list_table('2: Купить кефир')
+        self.wait_for_row_in_list_table('1: Купить молоко')
+        self.wait_for_row_in_list_table('2: Купить кефир')
         # Гражданину интересно, запомнит ли сайт её список. Далее он видит, что сайт сгенерировал для неё уникальный урл - об этом есть текст
+    def test_multiple_users_can_start_list_at_different_urls(self):
+        self.browser.get(self.live_server_url)
+        inputbox = self.browser.find_element('id', 'id_new_item')
+        inputbox.send_keys('Купить молоко')
+        inputbox.send_keys(Keys.ENTER)
+        self.wait_for_row_in_list_table('1: Купить молоко')
+        edith_list_url = self.browser.current_url
+        self.assertRegex(edith_list_url, '/lists/.+')
+
+        # Теперь новый гражданин2 заходит на сайт. Никаких признаков старого гражданина нет.
+
+        self.browser.quit()
+        self.browser = webdriver.Firefox()
+
+        self.browser.get(self.live_server_url)
+        page_text = self.browser.find_element('tag name', 'body').text
+        self.assertNotIn('1: Купить молоко', page_text)
+        self.assertNotIn('2: Купить кефир', page_text)
+
+        # Гражданин2 начинает новый список, вводя новый элемент
+        inputbox = self.browser.find_element('id', 'id_new_item')
+        inputbox.send_keys('1: Купить творог')
+        inputbox.send_keys(Keys.ENTER)
+        self.wait_for_row_in_list_table('1: Купить творог')
+
+        # Гражданин2 получает уникальный урл
+        francis_list_url = self.browser.current_url
+        self.assertRegex(francis_list_url, '/lists/.+')
+        self.assertNotEqual(francis_list_url, edith_list_url)
+
+        # Опять таки, списка гражданина1 нет
+
+        page_text = self.browser.find_element('tag name', 'body').text
+        self.assertNotIn('1: Купить молоко', page_text)
+        self.assertIn('1: Купить творог', page_text)
+
         self.fail('Закончить тест')
         # Она переходит на урл, список ещё там
 
