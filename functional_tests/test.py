@@ -89,9 +89,9 @@ class NewVisitorTest(LiveServerTestCase):
 
         # Гражданин2 начинает новый список, вводя новый элемент
         inputbox = self.browser.find_element('id', 'id_new_item')
-        inputbox.send_keys('1: Купить творог')
+        inputbox.send_keys('Купить творог')
         inputbox.send_keys(Keys.ENTER)
-        self.wait_for_row_in_list_table('1: Купить творог')
+        self.wait_for_row_in_list_table('2: Купить творог')
 
         # Гражданин2 получает уникальный урл
         francis_list_url = self.browser.current_url
@@ -102,7 +102,7 @@ class NewVisitorTest(LiveServerTestCase):
 
         page_text = self.browser.find_element('tag name', 'body').text
         self.assertNotIn('1: Купить молоко', page_text)
-        self.assertIn('1: Купить творог', page_text)
+        self.assertIn('2: Купить творог', page_text)
 
         self.fail('Закончить тест')
         # Она переходит на урл, список ещё там

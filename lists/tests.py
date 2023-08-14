@@ -23,17 +23,7 @@ class HomePageTest(TestCase):
     def test_redirect_after_POST(self):
         response = self.client.post('/', data={'item_text': 'A new list item'})
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['location'], '/')
-
-    def test_displays_all_list_items(self):
-        '''Тест: отображаются в виде списка'''
-        Item.objects.create(text='item 1')
-        Item.objects.create(text='item 2')
-
-        response = self.client.get('/')
-
-        self.assertIn('item 1', response.content.decode())
-        self.assertIn('item 2', response.content.decode())
+        self.assertEqual(response['location'], '/lists/my-list')
 
     def test_home_page_returns_correct_html(self):
         '''Тест: домашняя страница возвращает правильный html'''
@@ -64,3 +54,21 @@ class ItemModelTest(TestCase):
         second_saved_item = saved_items[1]
         self.assertEqual(first_saved_item.text, 'The first (ever) list item')
         self.assertEqual(second_saved_item.text, 'Item the second')
+
+
+class ListViewTest(TestCase):
+    '''тест представления списка'''
+    def test_user_lists_template(self):
+        '''тест: используется шаблон списка'''
+        response = self.client.get('/lists/my-list/')
+        self.assertTemplateUsed(response, 'lists/list.html')
+
+    def test_displays_all_items(self):
+        '''тест: отображаются все элементы списка'''
+        Item.objects.create(text='item 1')
+        Item.objects.create(text='item 2')
+
+        response = self.client.get('/lists/my-list/')
+
+        self.assertContains(response, 'item 1')
+        self.assertContains(response, 'item 2')

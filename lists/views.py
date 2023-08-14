@@ -7,7 +7,14 @@ def view_index(request):
     items = Item.objects.all()
     if request.method == 'POST':
         Item.objects.create(text=request.POST['item_text'])
-        print(request.POST)
-        return redirect('/')
+
+        return redirect('/lists/my-list')
 
     return render(request, 'lists/index.html', {'items': items})
+
+
+def view_list(request):
+    '''Представление списка'''
+    items = Item.objects.all()
+
+    return render (request, 'lists/list.html', {'items': items})
