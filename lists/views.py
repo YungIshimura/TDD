@@ -1,20 +1,19 @@
 from django.shortcuts import render, redirect
-from .models import Item
+from lists.models import Item, List
 
 
-def view_index(request):
-    '''Домашняя страница'''
-    items = Item.objects.all()
-    if request.method == 'POST':
-        Item.objects.create(text=request.POST['item_text'])
-
-        return redirect('/lists/my-list')
-
-    return render(request, 'lists/index.html', {'items': items})
-
+def home_page(request):
+    '''домашняя страница'''
+    return render(request, 'index.html')
 
 def view_list(request):
-    '''Представление списка'''
+    '''представление списка'''
     items = Item.objects.all()
+    return render(request, 'list.html', {'items': items})
 
-    return render (request, 'lists/list.html', {'items': items})
+def new_list(request):
+    '''новый список'''
+    list_ = List.objects.create()
+    Item.objects.create(text=request.POST['item_text'], list=list_)
+
+    return redirect('/lists/only-one-list/')

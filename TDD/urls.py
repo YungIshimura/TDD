@@ -1,9 +1,9 @@
-from django.contrib import admin
-from django.urls import path
-from lists.views import view_index, view_list
+from django.conf.urls import url
+from lists import views
+
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', view_index, name='index'),
-    path('lists/my-list/', view_list, name='list')
+    url(r'^$', views.home_page, name='home'),
+    url(r'^lists/new$', views.new_list, name='new_list'),
+    url(r'^lists/only-one-list/$', views.view_list, name='view_list'),
 ]
