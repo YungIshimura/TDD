@@ -3,7 +3,10 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
+from environs import Env
 
+env = Env()
+env.read_env()
 MAX_WAIT = 10
 
 
@@ -12,6 +15,10 @@ class NewVisitorTest(StaticLiveServerTestCase):
     def setUp(self):
         '''установка'''
         self.browser = webdriver.Firefox()
+        staging_server = env('STAGING_SERVER')
+        if staging_server:
+            self.live_server_url = f'http://{staging_server}'
+
 
     def wait_for_row_in_list_table(self, row_text):
         '''ожидать строку в таблице списка'''
